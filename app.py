@@ -5,7 +5,6 @@ from sqlalchemy import create_engine, text
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
 app = Flask(__name__)
 
 # Define MySQL connection parameters
@@ -29,7 +28,7 @@ def connect_to_mysql():
 def create_tables(conn):
     with conn.connect() as con:
         query = """
-            CREATE TABLE IF NOT EXISTS student1 (
+            CREATE TABLE IF NOT EXISTS student (
                 student_id INT AUTO_INCREMENT PRIMARY KEY,
                 school VARCHAR(2),
                 sex CHAR(1),
@@ -67,14 +66,14 @@ def create_tables(conn):
         print("Student table created successfully")
 
         query = """
-            CREATE TABLE IF NOT EXISTS grade1 (
+            CREATE TABLE IF NOT EXISTS grade (
                 student_id INT,
                 course VARCHAR(20),
                 G1 INT,
                 G2 INT,
                 G3 INT,
                 PRIMARY KEY (student_id, course),
-                FOREIGN KEY (student_id) REFERENCES student1(student_id)
+                FOREIGN KEY (student_id) REFERENCES student(student_id)
             )
         """
         con.execute(text(query))
@@ -93,7 +92,7 @@ def clean_grade_data(df):
 # Function to load data into MySQL database for Student table
 def load_student_data_to_mysql(conn, df):
     try:
-        df.to_sql("student1", con=conn, if_exists='replace', index=False)
+        df.to_sql("student", con=conn, if_exists='replace', index=False)
         print("Data inserted into Student table successfully")
     except Exception as e:
         print("Error while loading data to MySQL for Student table", e)
@@ -101,7 +100,7 @@ def load_student_data_to_mysql(conn, df):
 # Function to load data into MySQL database for Grade table
 def load_grade_data_to_mysql(conn, df):
     try:
-        df.to_sql("grade1", con=conn, if_exists='replace', index=False)
+        df.to_sql("grade", con=conn, if_exists='replace', index=False)
         print("Data inserted into Grade table successfully")
     except Exception as e:
         print("Error while loading data to MySQL for Grade table", e)
@@ -280,7 +279,7 @@ def load_data():
         conn.dispose()
 
     # Redirect to the index route after loading data
-    return redirect('/')
+    return render_template('load_data.html', loaded=True)
 
 if __name__ == "__main__":
     app.run(debug=True)
