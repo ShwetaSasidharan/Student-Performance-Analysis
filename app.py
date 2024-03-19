@@ -68,11 +68,10 @@ def create_tables(conn):
         query = """
             CREATE TABLE IF NOT EXISTS grade (
                 student_id INT,
-                course VARCHAR(20),
                 G1 INT,
                 G2 INT,
                 G3 INT,
-                PRIMARY KEY (student_id, course),
+                PRIMARY KEY (student_id),
                 FOREIGN KEY (student_id) REFERENCES student(student_id)
             )
         """
@@ -80,14 +79,51 @@ def create_tables(conn):
         print("Grade table created successfully")
 
 # Function to perform data cleaning and validation for Student table
+# Function to perform data cleaning and validation for Student table
 def clean_student_data(df):
-    # Your data cleaning and validation code here
+    # Convert 'sex' column to uppercase
+    df['sex'] = df['sex'].str.upper()
+
+    # Convert 'address' column to uppercase
+    df['address'] = df['address'].str.upper()
+
+    # Replace 'LE3' and 'GT3' with 'less' and 'greater' respectively in 'famsize' column
+    df['famsize'] = df['famsize'].replace({'LE3': 'less', 'GT3': 'greater'})
+
+    # Replace 'T' and 'A' with 'together' and 'apart' respectively in 'Pstatus' column
+    df['Pstatus'] = df['Pstatus'].replace({'T': 'together', 'A': 'apart'})
+
+    # Validate 'Medu' and 'Fedu' columns to be within range [0, 4]
+    df['Medu'] = np.clip(df['Medu'], 0, 4)
+    df['Fedu'] = np.clip(df['Fedu'], 0, 4)
+
+    # Validate 'traveltime', 'studytime', 'failures', 'famrel', 'freetime', 'goout', 'Dalc', 'Walc', 'health' columns
+    # to be within range [1, 4]
+    columns_to_validate = ['traveltime', 'studytime', 'failures', 'famrel', 'freetime', 'goout', 'Dalc', 'Walc', 'health']
+    for col in columns_to_validate:
+        df[col] = np.clip(df[col], 1, 4)
+
+    # Validate 'absences' column to be non-negative
+    df['absences'] = df['absences'].clip(lower=0)
+
+    # Add student_id column with unique IDs
+    df['student_id'] = range(1, len(df) + 1)
+
     return df
+
+
 
 # Function to perform data cleaning and validation for Grade table
 def clean_grade_data(df):
-    # Your data cleaning and validation code here
-    return df
+    
+    # Select only the relevant columns
+    relevant_columns = ['student_id', 'G1', 'G2', 'G3']
+    grade_df = df[relevant_columns].copy()
+
+    # Add student_id column with unique IDs
+    grade_df['student_id'] = range(1, len(grade_df) + 1)
+
+    return grade_df
 
 # Function to load data into MySQL database for Student table
 def load_student_data_to_mysql(conn, df):
